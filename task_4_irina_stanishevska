@@ -1,0 +1,41 @@
+import re
+import requests
+import hashlib
+
+
+def get_content(url):
+    # Перевірка, якщо контент вже збережений у файлі
+    filename = hashlib.md5(url.encode('utf-8')).hexdigest()
+    try:
+        with open(filename, 'r') as f:
+            content = f.read()
+            print('Контент отримано з файлу')
+            return content
+    except FileNotFoundError:
+        # Виконання запиту та збереження контенту
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open(filename, 'w') as f:
+                f.write(response.text)
+            print('Контент отримано з сервера')
+            return response.text
+        else:
+            print(f'Не вдалося отримати веб-сторінку. Код статусу: {response.status_code}')
+            return None
+
+
+def extract_job_titles(content):
+    # Регулярний вираз для пошуку назв вакансій у <h3 class="jobCard_title">
+    job_titles = re.findall(r'<h3[^>]*class="jobCard_title"[^>]*>(.*?)</h3>', content, re.DOTALL)
+    job_titles = [re.sub(r'<.*?>', '', title).strip() for title in
+                  job_titles]  # Видалення HTML-тегів та зайвих пробілів
+    return job_titles
+
+
+if __name__ == '__main__':
+    url = 'https://www.lejobadequat.com/emplois'
+    content = get_content(url)
+
+    if content:
+        job_titles = extract_job_titles(content)
+        print(job_titles)
