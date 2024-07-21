@@ -143,7 +143,7 @@ def run_script(age, period):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
             'Cookie': cookies,
-            'Authorization': 'Basic YWRXXXXXXaW4zNw=='
+            'Authorization': os.getenv('AUTHORIZATION_TOKEN')
         }
 
         response = requests.get('https://test.globelink.eu/api/wizardData', headers=headers)
