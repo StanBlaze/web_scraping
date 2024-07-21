@@ -31,7 +31,7 @@ def run_script(age, period):
     driver = webdriver.Chrome(options=options)
 
     try:
-        driver.get("https://XXXXXXXXXXX.test.globelink.eu/wizard#/step1.html?country_id=4")
+        driver.get("https://XXXXXXXXXXX.XXXX.globelink.eu/wizard#/step1.html?country_id=4")
         print("Page loaded")
 
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
