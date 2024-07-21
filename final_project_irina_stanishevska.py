@@ -9,12 +9,10 @@ import json
 import csv
 import os
 
-# Отримання cookies у вигляді словника
 def get_cookies_as_dict(driver):
     cookies = driver.get_cookies()
     return {cookie['name']: cookie['value'] for cookie in cookies}
 
-# Збереження даних про ціни у CSV файл
 def save_price_data_to_csv(price_data, age, period):
     filename = 'price_data.csv'
     file_exists = os.path.isfile(filename)
@@ -145,7 +143,7 @@ def run_script(age, period):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
             'Cookie': cookies,
-            'Authorization': 'Basic YWRtaW46YWRtaW4zNw=='
+            'Authorization': 'Basic YWRXXXXXXaW4zNw=='
         }
 
         response = requests.get('https://test.globelink.eu/api/wizardData', headers=headers)
