@@ -5,13 +5,18 @@ from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime, timedelta
 import time
 import requests
-import json
 import csv
 import os
+from dotenv import load_dotenv
+
+# Загрузка переменных окружения
+load_dotenv()
+
 
 def get_cookies_as_dict(driver):
     cookies = driver.get_cookies()
     return {cookie['name']: cookie['value'] for cookie in cookies}
+
 
 def save_price_data_to_csv(price_data, age, period):
     filename = 'price_data.csv'
@@ -21,15 +26,23 @@ def save_price_data_to_csv(price_data, age, period):
         if not file_exists:
             writer.writerow(['ID', 'priceTotal', 'pricePolicy', 'priceIPT', 'priceNet', 'Age', 'Period'])
         for item_id, item_data in price_data.items():
-            writer.writerow([item_id, item_data['priceTotal'], item_data['pricePolicy'], item_data['priceIPT'], item_data['priceNet'], age, period])
+            writer.writerow([item_id, item_data['priceTotal'], item_data['pricePolicy'], item_data['priceIPT'],
+                             item_data['priceNet'], age, period])
     print(f"Data saved to {filename}")
+
 
 def run_script(age, period):
     options = webdriver.ChromeOptions()
+    options.add_argument('--headless')  # Добавляем режим headless
+    options.add_argument('--disable-gpu')  # Отключаем использование GPU 
+    options.add_argument('--no-sandbox')  
+    options.add_argument(
+        '--disable-dev-shm-usage')  # Отключаем использование /dev/shm 
+
     driver = webdriver.Chrome(options=options)
 
     try:
-        driver.get("https://XXXXXXXXXXX.XXXX.XXXX.eu/wizard#/step1.html?country_id=4")
+        driver.get("https://XXXXXXXXX.globelink.eu/wizard#/step1.html?country_id=4")
         print("Page loaded")
 
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
@@ -51,12 +64,14 @@ def run_script(age, period):
         print("Clicked on 'Single Trip' button")
 
         WebDriverWait(driver, 20).until(
-            EC.text_to_be_present_in_element_attribute((By.XPATH, "//button[contains(@class, 'Single Trip')]"), "aria-pressed", "true")
+            EC.text_to_be_present_in_element_attribute((By.XPATH, "//button[contains(@class, 'Single Trip')]"),
+                                                       "aria-pressed", "true")
         )
         print("aria-pressed is now 'true' for 'Single Trip' button")
 
         europe_button = WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'Europe') and contains(., 'inc. Egypt & Morocco')]"))
+            EC.presence_of_element_located(
+                (By.XPATH, "//button[contains(@class, 'Europe') and contains(., 'inc. Egypt & Morocco')]"))
         )
         europe_button.click()
         print("Clicked on 'Europe inc. Egypt & Morocco' button")
@@ -113,7 +128,6 @@ def run_script(age, period):
         print("End date updated successfully")
         print("End date input value:", end_date_input.get_attribute('value'))
 
-
         try:
             next_button = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "#firstStepForm > section > div:nth-child(7) > div > div"))
@@ -132,10 +146,10 @@ def run_script(age, period):
         except Exception as e:
             print(f"Could not find or click NEXT button: {e}")
 
-        # Очікування завершення запиту
-        time.sleep(5)  
+        # Ожидание завершения запроса
+        time.sleep(5)
 
-         # Отримання cookies з поточної сесії
+        # Получение cookies из текущей сессии
         cookies_dict = get_cookies_as_dict(driver)
         cookies = '; '.join([f"{name}={value}" for name, value in cookies_dict.items()])
         print("Cookies:", cookies)
@@ -143,10 +157,10 @@ def run_script(age, period):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
             'Cookie': cookies,
-            'Authorization': os.getenv('AUTHORIZATION_TOKEN')
+            'Authorization': 'XXXXXXXXXX'
         }
 
-        response = requests.get('https://test.globelink.eu/api/wizardData', headers=headers)
+        response = requests.get('https://XXXXX.globelink.eu/api/wizardData', headers=headers)
         print(f"Response Status Code: {response.status_code}")
 
         if response.status_code == 200:
@@ -162,17 +176,17 @@ def run_script(age, period):
         else:
             print(f"Failed to fetch data, status code: {response.status_code}")
 
-        # Натискання кнопки назад для повернення на попередню сторінку
         try:
             back_button = WebDriverWait(driver, 20).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, ".back-button-wrapper"))
+                EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "#desktop__progress > div:nth-child(1) > span > span > img"))
             )
             back_button.click()
-            print("Clicked on 'Back to Trip details' button")
+            print("Clicked on 'Back to Trip details' button using image selector")
         except Exception as e:
-            print(f"Could not find or click 'Back to Trip details' button: {e}")
+            print(f"Could not find or click 'Back to Trip details' button using image selector: {e}")
 
-        time.sleep(5)  # Очікування завантаження попередньої сторінки
+        time.sleep(5)  # Ожидание загрузки предыдущей страницы
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -182,6 +196,7 @@ def run_script(age, period):
         driver.quit()
 
     return True
+
 
 ages = [16, 51, 66, 71, 75, 80]
 periods = [5, 10, 17, 24, 31, 38, 45, 52, 60]
@@ -196,6 +211,7 @@ for age in ages:
             attempt += 1
             print(f"Attempt {attempt} for age {age} and period {period}...")
             success = run_script(age, period)
+            execution_time = end_time - start_time
 
         if not success:
             print(f"Script failed after {max_attempts} attempts for age {age} and period {period}")
